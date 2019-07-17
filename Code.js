@@ -1,31 +1,27 @@
-function sendNippo() {
-  var cal = CalendarApp.getCalendarById(EMAIL);
+function createNippo() {
+  var myCalendar = CalendarApp.getCalendarById(EMAIL);
   
   var text = "```\n# 本日の予定\n";
-  
-  // 今日の予定
+
   var date = new Date();
-  var events = cal.getEventsForDay(date);
+  var events = myCalendar.getEventsForDay(date);
   for (var i = 0; i < events.length; i++) {
     text += "    - " + events[i].getTitle() + "\n"; 
-    Logger.log(events[i].getTitle());
   }
       
   text += "\n#明日の予定\n"
-  
-  // 明日の予定
+
   date.setDate(date.getDate() + 1);
-  var events = cal.getEventsForDay(date);
+  var events = myCalendar.getEventsForDay(date);
   for (var i = 0; i < events.length; i++) {
     text += "    - " + events[i].getTitle() + "\n"; 
   }
   
   text += "```";
-  
-  sendHttpPost(text);
+  postSlack(text);
 }
 
-function sendHttpPost(text){
+function postSlack(text){
    var jsonData =
    {
      'channel' : CHANNEL,
@@ -42,4 +38,24 @@ function sendHttpPost(text){
    };
 
    UrlFetchApp.fetch(SLACK_WEBHOOK_URL, options);
+}
+
+function isJapaneseHoliday(){
+  var date = new Date();
+
+  //土日チェック
+  var weekInt = date.getDay();
+  if(weekInt <= 0 || 6 <= weekInt){
+    return true;
+  }
+
+  //祝日チェック
+  var japaneseHolidayCalendarId = "ja.japanese#holiday@group.v.calendar.google.com";
+  var calendar = CalendarApp.getCalendarById(japaneseHolidayCalendarId);
+  var eventsForToday = calendar.getEventsForDay(today);
+  if(eventsForToday.length > 0){
+    return true;
+  }
+  
+  return false;
 }
